@@ -133,7 +133,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class QueryRequest(BaseModel):
+class ChatRequest(BaseModel):
     question: str
     include_history: bool = True
 
@@ -145,9 +145,9 @@ def health_check():
         "vector_store": "active"
     }
 
-@app.post("/query")
-def ask_question(request: QueryRequest):
-    logger.info("[API] /query POST request received.")
+@app.post("/chat")  # This is the new endpoint for the frontend
+def chat(request: ChatRequest):
+    logger.info("[API] /chat POST request received.")
     try:
         answer = rag_system.query(request.question, include_history=request.include_history)
         return {"answer": answer, "status": "success"}
