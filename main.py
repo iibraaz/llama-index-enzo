@@ -1,6 +1,7 @@
 import os
 import logging
 from datetime import datetime
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from llama_index.llms.openai import OpenAI
@@ -123,6 +124,14 @@ rag_system.ingest_all_documents()  # Auto-load files in 'data/' folder
 
 # --- FastAPI App Setup ---
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Or specify Bolt.new domain for security
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class QueryRequest(BaseModel):
     question: str
