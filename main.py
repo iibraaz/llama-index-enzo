@@ -119,7 +119,7 @@ class RAGConversationSystem:
 
 # --- Initialize System ---
 rag_system = RAGConversationSystem(vector_store=pgvector_store)
-rag_system.ingest_all_documents()  # ⬅️ auto-load all files in 'data/' folder
+rag_system.ingest_all_documents()  # Auto-load files in 'data/' folder
 
 # --- FastAPI App Setup ---
 app = FastAPI()
@@ -153,6 +153,7 @@ def ask_question(request: QueryRequest):
 async def upload_file(file: UploadFile = File(...)):
     try:
         contents = await file.read()
+        os.makedirs("data", exist_ok=True)  # ✅ Ensure folder exists
         file_path = f"data/{file.filename}"
         with open(file_path, "wb") as f:
             f.write(contents)
