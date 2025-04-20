@@ -1,0 +1,102 @@
+
+
+EVRLS: Building the Future of AI Agents and Infrastructure in the UAE
+
+By Ibrahim Algazi, CEO of EVRLS
+
+Over the past several months, I’ve been working tirelessly with my team to bring a new kind of AI company to life—EVRLS. What started as a small idea has grown into a bold mission: to build intelligent, industry-specific AI agents and infrastructures that not only simplify operations for businesses, but also position the UAE as a global AI powerhouse.
+
+At the heart of our company is our flagship product: Enzo—an AI agent designed to help businesses operate smarter, not harder.
+
+⸻
+
+What is Enzo?
+
+Enzo is not just another AI assistant. It’s a fully integrated AI agent designed to automate real-world business workflows across industries. It connects to existing databases, integrates with company CRMs, and performs critical operational tasks—from sales and marketing to finance and admin.
+
+We’ve been deliberately positioning Enzo as more than a chatbot or assistant. It’s an autonomous agent that acts on behalf of users—scoring leads, generating reports, reviving cold contacts, sending quotations, handling bookings, and more.
+
+We’re starting with a strong vertical: real estate.
+
+⸻
+
+Enzo for Real Estate
+
+We identified that sales and operations teams in real estate are overwhelmed with admin, data handling, and lead follow-ups. Enzo takes care of that with:
+	•	AI-Powered Lead Management
+Tracks, scores, and revives leads based on CRM and campaign data.
+	•	Automated Sales Offers
+Generates personalized offers tailored to client budget and location.
+	•	Smart Inventory System
+Syncs available units, reservations, and automates SPA contract handling.
+	•	Meeting & Calendar Integration
+Enzo books, follows up, and syncs appointments with ease.
+	•	AI Reporting for Sales & Performance
+Teams receive daily reports and alerts, helping leadership stay on top of goals.
+
+We’ve also built out a Premium Enzo version tailored for high-level executives, acting as a personalized AI secretary—handling flights, hotel bookings, agendas, reminders, and emails via chat or voice note. Think of it as having your own Chief of Staff, powered by AI.
+
+⸻
+
+Meet the Team
+
+At EVRLS, I’m fortunate to be working alongside two extremely driven and talented partners:
+	•	Ahmed, our Chief Marketing Officer, a highly creative strategist pushing the boundaries of AI branding, storytelling, and user acquisition.
+	•	Yousef, our Chief Financial Officer, ensuring that every move we make is financially sound, sustainable, and scalable.
+
+We’ve also brought on Omar as our Chief Product Officer, who’s helping refine the UX, backend systems, and deployment of Enzo.
+
+Together, we’ve been exploring how to bootstrap EVRLS efficiently, build community organically, and generate revenue from day one.
+
+⸻
+
+Our Tech Stack & Current Progress
+
+We’ve recently completed the core infrastructure of our Retrieval-Augmented Generation (RAG) environment for Enzo using the following stack:
+	•	Supabase – For database storage and user management.
+	•	PostgreSQL + TimescaleDB – With embeddings for querying real-time business data.
+	•	Docker – To self-host and scale our stack.
+	•	Hugging Face Transformers – Powering our conversational AI logic.
+	•	N8n – Automating RAG workflows and data pipeline operations.
+	•	Bolt.new – For a clean and responsive UI.
+	•	Hostinger – Temporary hosting while we finalize infrastructure plans.
+
+We’re currently focusing on finalizing Enzo’s MVP by the end of April, and launching an awareness campaign immediately after.
+
+⸻
+
+Expanding into AI Infrastructure: EVRLS x UAE Data Center
+
+Recently, we were approached by the CEO of a leading bank in Dubai for a potential collaboration in the AI data center space. This conversation sparked a new branch of our company focused on AI-powered cloud infrastructure.
+
+We’re working on a data center model that offers AI Infrastructure-as-a-Service (AI-IaaS)—targeting UAE-regulated industries and AI startups. Our offering will include:
+	•	AI-Accelerated Computing Nodes
+	•	Hybrid Cloud Models
+	•	SaaS + AI Bundles
+	•	Regulatory-Compliant Hosting for local industries
+
+By bundling our AI agents (like Enzo) with infrastructure services, we aim to create an end-to-end ecosystem for AI businesses in the region—one that helps them build, deploy, and scale with confidence.
+
+⸻
+
+What’s Next
+
+We’re keeping things lean, smart, and practical. The roadmap ahead includes:
+	1.	Launching Enzo to Real Estate Clients
+We’re in active talks with local agencies and developers for pilot testing.
+	2.	Expanding to E-commerce & Retail
+Enzo will be tailored to handle inventory, order flows, and customer engagement.
+	3.	Establishing the First AI-Native Data Center
+Built for speed, compliance, and AI scalability—positioned in the UAE.
+	4.	Growing Our Community
+We’ve also created a weekly mastermind group—a space for entrepreneurs to share, learn, and solve problems together. It’s been instrumental to our growth.
+
+⸻
+
+Final Thoughts
+
+We’re not building just another AI company. EVRLS is about elevating how businesses operate with automation, intelligence, and seamless integration. We believe AI should not only enhance productivity, but also liberate humans from repetitive work so they can focus on what really matters—creativity, decision-making, and relationships.
+
+This is only the beginning.
+
+If you’re an executive, agency, or entrepreneur who wants to automate intelligently—let’s connect.
