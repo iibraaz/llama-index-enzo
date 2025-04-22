@@ -20,7 +20,6 @@ logging.basicConfig(
 logger = logging.getLogger("EVRLS")
 
 # --- Environment Setup ---
-
 load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
