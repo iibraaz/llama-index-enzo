@@ -1,8 +1,0 @@
-__pycache__/
-.env
-*.db
-*.sqlite
-*.log
-venv/
-.venv/
-.DS_Store

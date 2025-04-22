@@ -1,6 +1,7 @@
 import os
 import logging
 from datetime import datetime
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from llama_index.llms.openai import OpenAI
@@ -8,6 +9,7 @@ from llama_index.core.settings import Settings
 from llama_index.vector_stores.postgres import PGVectorStore
 from llama_index.core import StorageContext, Document, VectorStoreIndex, SimpleDirectoryReader
 from llama_index.core.prompts import PromptTemplate
+from dotenv import load_dotenv
 from llama_index.core.node_parser import SimpleNodeParser
 
 # --- Setup Logging ---
@@ -18,11 +20,12 @@ logging.basicConfig(
 logger = logging.getLogger("EVRLS")
 
 # --- Environment Setup ---
-os.environ["OPENAI_API_KEY"] = "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"
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+load_dotenv()
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # --- LLM Setup ---
-llm = OpenAI(model="gpt-3.5-turbo", temperature=0.7)
+llm = OpenAI(model="gpt-3.5-turbo", temperature=0.7, api_key=OPENAI_API_KEY)
 Settings.llm = llm
 
 # --- PGVector Connection ---
@@ -119,12 +122,20 @@ class RAGConversationSystem:
 
 # --- Initialize System ---
 rag_system = RAGConversationSystem(vector_store=pgvector_store)
-rag_system.ingest_all_documents()  # ⬅️ auto-load all files in 'data/' folder
+rag_system.ingest_all_documents()  # Auto-load files in 'data/' folder
 
 # --- FastAPI App Setup ---
 app = FastAPI()
 
-class QueryRequest(BaseModel):
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Or specify Bolt.new domain for security
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+class ChatRequest(BaseModel):
     question: str
     include_history: bool = True
 
@@ -136,9 +147,9 @@ def health_check():
         "vector_store": "active"
     }
 
-@app.post("/query")
-def ask_question(request: QueryRequest):
-    logger.info("[API] /query POST request received.")
+@app.post("/chat")  # This is the new endpoint for the frontend
+def chat(request: ChatRequest):
+    logger.info("[API] /chat POST request received.")
     try:
         answer = rag_system.query(request.question, include_history=request.include_history)
         return {"answer": answer, "status": "success"}
@@ -153,6 +164,7 @@ def ask_question(request: QueryRequest):
 async def upload_file(file: UploadFile = File(...)):
     try:
         contents = await file.read()
+        os.makedirs("data", exist_ok=True)  # ✅ Ensure folder exists
         file_path = f"data/{file.filename}"
         with open(file_path, "wb") as f:
             f.write(contents)
