@@ -79,46 +79,47 @@ class RAGConversationSystem:
         except Exception as e:
             logger.error(f"[INGEST ERROR] {str(e)}", exc_info=True)
 
-    def query(self, question, include_history=True, user_id=None):
-        try:
-            logger.info(f"[QUERY] User: {user_id} | Question: {question}")
+   def query(self, question, include_history=True, user_id=None):
+    try:
+        logger.info(f"[QUERY] User: {user_id} | Question: {question}")
 
-            # Use user_id filter for retrieval
-            document_retriever = self.index.as_retriever(similarity_top_k=3, filters={"user_id": user_id})
-            docs = document_retriever.retrieve(question)
-            context = "\n".join([d.text for d in docs]) if docs else "No relevant documents"
+        filters = MetadataFilters(filters=[
+            MetadataFilter(key="user_id", value=user_id)
+        ])
 
-            history = ""
-            if include_history:
-                history_retriever = self.index.as_retriever(similarity_top_k=2, filters={"user_id": user_id})
-                convos = history_retriever.retrieve(question)
-                history = "\n".join([c.text for c in convos]) if convos else "No conversation history."
+        document_retriever = self.index.as_retriever(similarity_top_k=3, filters=filters)
+        docs = document_retriever.retrieve(question)
+        context = "\n".join([d.text for d in docs]) if docs else "No relevant documents"
 
-            response = self.llm.complete(
-                self.qa_prompt.format(
-                    documents=context,
-                    conversations=history,
-                    question=question
-                )
+        history = ""
+        if include_history:
+            history_retriever = self.index.as_retriever(similarity_top_k=2, filters=filters)
+            convos = history_retriever.retrieve(question)
+            history = "\n".join([c.text for c in convos]) if convos else "No conversation history."
+
+        response = self.llm.complete(
+            self.qa_prompt.format(
+                documents=context,
+                conversations=history,
+                question=question
             )
+        )
 
-            # Save conversation
-            self.index.insert(Document(
-                text=f"User: {question}\nAI: {response}",
-                metadata={
-                    "type": "conversation",
-                    "timestamp": self._get_safe_timestamp(),
-                    "user_id": user_id
-                }
-            ))
+        self.index.insert(Document(
+            text=f"User: {question}\nAI: {response}",
+            metadata={
+                "type": "conversation",
+                "timestamp": self._get_safe_timestamp(),
+                "user_id": user_id
+            }
+        ))
 
-            logger.info("[QUERY SUCCESS]")
-            return str(response)
+        logger.info("[QUERY SUCCESS]")
+        return str(response)
 
-        except Exception as e:
-            logger.error(f"[QUERY ERROR] {str(e)}", exc_info=True)
-            raise Exception(f"Query failed: {str(e)}")
-
+    except Exception as e:
+        logger.error(f"[QUERY ERROR] {str(e)}", exc_info=True)
+        raise Exception(f"Query failed: {str(e)}")
 # --- Init System ---
 rag_system = RAGConversationSystem(vector_store=pgvector_store)
 
