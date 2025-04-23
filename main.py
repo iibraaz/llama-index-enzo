@@ -11,8 +11,7 @@ from llama_index.vector_stores.postgres import PGVectorStore
 from llama_index.core import StorageContext, Document, VectorStoreIndex, SimpleDirectoryReader
 from llama_index.core.prompts import PromptTemplate
 from llama_index.core.node_parser import SimpleNodeParser
-from llama_index.core.retrievers import MetadataFilters, MetadataFilter
-
+from llama_index.core.retrievers.types import MetadataFilter, MetadataFilters
 # --- Logging ---
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("EVRLS")
@@ -82,46 +81,46 @@ class RAGConversationSystem:
             logger.error(f"[INGEST ERROR] {str(e)}", exc_info=True)
 
     def query(self, question, include_history=True, user_id=None):
-        try:
-            logger.info(f"[QUERY] User: {user_id} | Question: {question}")
+    try:
+        logger.info(f"[QUERY] User: {user_id} | Question: {question}")
 
-            filters = MetadataFilters(filters=[
-                MetadataFilter(key="user_id", value=user_id)
-            ])
+        filters = MetadataFilters(filters=[
+            MetadataFilter(key="user_id", value=user_id)
+        ]) if user_id else None
 
-            document_retriever = self.index.as_retriever(similarity_top_k=3, filters=filters)
-            docs = document_retriever.retrieve(question)
-            context = "\n".join([d.text for d in docs]) if docs else "No relevant documents"
+        document_retriever = self.index.as_retriever(similarity_top_k=3, filters=filters)
+        docs = document_retriever.retrieve(question)
+        context = "\n".join([d.text for d in docs]) if docs else "No relevant documents"
 
-            history = ""
-            if include_history:
-                history_retriever = self.index.as_retriever(similarity_top_k=2, filters=filters)
-                convos = history_retriever.retrieve(question)
-                history = "\n".join([c.text for c in convos]) if convos else "No conversation history."
+        history = ""
+        if include_history:
+            history_retriever = self.index.as_retriever(similarity_top_k=2, filters=filters)
+            convos = history_retriever.retrieve(question)
+            history = "\n".join([c.text for c in convos]) if convos else "No conversation history."
 
-            response = self.llm.complete(
-                self.qa_prompt.format(
-                    documents=context,
-                    conversations=history,
-                    question=question
-                )
+        response = self.llm.complete(
+            self.qa_prompt.format(
+                documents=context,
+                conversations=history,
+                question=question
             )
+        )
 
-            self.index.insert(Document(
-                text=f"User: {question}\nAI: {response}",
-                metadata={
-                    "type": "conversation",
-                    "timestamp": self._get_safe_timestamp(),
-                    "user_id": user_id
-                }
-            ))
+        self.index.insert(Document(
+            text=f"User: {question}\nAI: {response}",
+            metadata={
+                "type": "conversation",
+                "timestamp": self._get_safe_timestamp(),
+                "user_id": user_id
+            }
+        ))
 
-            logger.info("[QUERY SUCCESS]")
-            return str(response)
+        logger.info("[QUERY SUCCESS]")
+        return str(response)
 
-        except Exception as e:
-            logger.error(f"[QUERY ERROR] {str(e)}", exc_info=True)
-            raise Exception(f"Query failed: {str(e)}")
+    except Exception as e:
+        logger.error(f"[QUERY ERROR] {str(e)}", exc_info=True)
+        raise Exception(f"Query failed: {str(e)}")
 
 # --- Init System ---
 rag_system = RAGConversationSystem(vector_store=pgvector_store)
