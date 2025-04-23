@@ -12,14 +12,11 @@ from llama_index.core import StorageContext, Document, VectorStoreIndex, SimpleD
 from llama_index.core.prompts import PromptTemplate
 from llama_index.core.node_parser import SimpleNodeParser
 
-# --- Setup Logging ---
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
-)
+# --- Logging ---
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("EVRLS")
 
-# --- Environment Setup ---
+# --- Env ---
 load_dotenv()
 
 llm = OpenAI(
@@ -29,18 +26,18 @@ llm = OpenAI(
 )
 Settings.llm = llm
 
-# --- PGVector Connection ---
+# --- Vector Store Setup ---
 pgvector_store = PGVectorStore.from_params(
     database="postgres",
     host="aws-0-ap-southeast-1.pooler.supabase.com",
-    password=r"IIbraaz123$$",
+    password=os.getenv("SUPABASE_DB_PASSWORD"),  # Store secrets in .env
     user="postgres.xseumcjcvlivvcdvgccr",
     port=5432,
     table_name="data_llamaindex",
     embed_dim=1536,
 )
 
-# --- RAG System Class ---
+# --- RAG System ---
 class RAGConversationSystem:
     def __init__(self, vector_store):
         self.vector_store = vector_store
@@ -50,11 +47,6 @@ class RAGConversationSystem:
             storage_context=self.storage_context
         )
         self.llm = llm
-        self._setup_components()
-
-    def _setup_components(self):
-        self.document_retriever = self.index.as_retriever(similarity_top_k=3)
-        self.conversation_retriever = self.index.as_retriever(similarity_top_k=2)
         self.qa_prompt = PromptTemplate(
             "Context:\n{documents}\n\nHistory:\n{conversations}\n\n"
             "Question: {question}\nAnswer:"
@@ -65,10 +57,11 @@ class RAGConversationSystem:
 
     def ingest_all_documents(self, folder_path="data", user_id=None):
         try:
-            logger.info(f"[AUTO INGEST] Loading documents from: {folder_path}")
+            logger.info(f"[INGEST] Ingesting for user: {user_id}")
             documents = SimpleDirectoryReader(input_dir=folder_path, recursive=True).load_data()
+
             if not documents:
-                logger.warning("[AUTO INGEST] No documents found.")
+                logger.warning("[INGEST] No documents found.")
                 return
 
             parser = SimpleNodeParser()
@@ -83,19 +76,23 @@ class RAGConversationSystem:
                 }
 
             self.index.insert_nodes(nodes)
-            logger.info(f"[AUTO INGEST SUCCESS] {len(nodes)} documents ingested.")
+            logger.info(f"[INGEST SUCCESS] {len(nodes)} nodes ingested for user {user_id}")
         except Exception as e:
-            logger.error(f"[AUTO INGEST ERROR] {str(e)}", exc_info=True)
+            logger.error(f"[INGEST ERROR] {str(e)}", exc_info=True)
 
     def query(self, question, include_history=True, user_id=None):
         try:
-            logger.info(f"[QUERY RECEIVED] Question: {question} | Include History: {include_history}")
-            docs = [d for d in self.document_retriever.retrieve(question) if d.metadata.get("user_id") == user_id]
+            logger.info(f"[QUERY] User: {user_id} | Question: {question}")
+
+            # Use user_id filter for retrieval
+            document_retriever = self.index.as_retriever(similarity_top_k=3, filters={"user_id": user_id})
+            docs = document_retriever.retrieve(question)
             context = "\n".join([d.text for d in docs]) if docs else "No relevant documents"
 
             history = ""
             if include_history:
-                convos = [c for c in self.conversation_retriever.retrieve(question) if c.metadata.get("user_id") == user_id]
+                history_retriever = self.index.as_retriever(similarity_top_k=2, filters={"user_id": user_id})
+                convos = history_retriever.retrieve(question)
                 history = "\n".join([c.text for c in convos]) if convos else "No conversation history."
 
             response = self.llm.complete(
@@ -106,27 +103,27 @@ class RAGConversationSystem:
                 )
             )
 
+            # Save conversation
             self.index.insert(Document(
                 text=f"User: {question}\nAI: {response}",
                 metadata={
                     "type": "conversation",
                     "timestamp": self._get_safe_timestamp(),
-                    "status": "processed",
                     "user_id": user_id
                 }
             ))
 
-            logger.info("[QUERY SUCCESS] Response generated.")
+            logger.info("[QUERY SUCCESS]")
             return str(response)
 
         except Exception as e:
             logger.error(f"[QUERY ERROR] {str(e)}", exc_info=True)
-            raise Exception(f"Query processing failed: {str(e)}")
+            raise Exception(f"Query failed: {str(e)}")
 
-# --- Initialize System ---
+# --- Init System ---
 rag_system = RAGConversationSystem(vector_store=pgvector_store)
 
-# --- FastAPI App Setup ---
+# --- FastAPI Setup ---
 app = FastAPI()
 
 app.add_middleware(
@@ -146,21 +143,16 @@ def health_check():
     return {
         "status": "healthy",
         "llm_model": llm.model,
-        "vector_store": "active"
+        "vector_store": "connected"
     }
 
 @app.post("/chat")
 def chat(request: ChatRequest, user_id: str = Header(...)):
-    logger.info("[API] /chat POST request received.")
     try:
-        answer = rag_system.query(request.question, include_history=request.include_history, user_id=user_id)
+        answer = rag_system.query(request.question, request.include_history, user_id)
         return {"answer": answer, "status": "success"}
     except Exception as e:
-        logger.error(f"[API ERROR] {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail={
-            "error": str(e),
-            "status": "error"
-        })
+        raise HTTPException(status_code=500, detail={"error": str(e), "status": "error"})
 
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...), user_id: str = Header(...)):
@@ -170,11 +162,9 @@ async def upload_file(file: UploadFile = File(...), user_id: str = Header(...)):
         file_path = f"data/{file.filename}"
         with open(file_path, "wb") as f:
             f.write(contents)
+
         rag_system.ingest_all_documents(user_id=user_id)
-        return {"message": f"{file.filename} uploaded and ingested.", "status": "success"}
+        return {"message": f"{file.filename} uploaded and processed", "status": "success"}
     except Exception as e:
         logger.error(f"[UPLOAD ERROR] {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail={
-            "error": str(e),
-            "status": "error"
-        })
+        raise HTTPException(status_code=500, detail={"error": str(e), "status": "error"})
