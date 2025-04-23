@@ -30,13 +30,12 @@ Settings.llm = llm
 pgvector_store = PGVectorStore.from_params(
     database="postgres",
     host="aws-0-ap-southeast-1.pooler.supabase.com",
-    password=os.getenv("SUPABASE_DB_PASSWORD"),  # Store secrets in .env
+    password=r"IIbraaz123$$",
     user="postgres.xseumcjcvlivvcdvgccr",
     port=5432,
     table_name="data_llamaindex",
     embed_dim=1536,
 )
-
 # --- RAG System ---
 class RAGConversationSystem:
     def __init__(self, vector_store):
